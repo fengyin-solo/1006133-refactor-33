@@ -1,4 +1,8 @@
+import { buildLegacyMortarData } from '@/domain/mortar/legacy'
 import type { EntryRow } from './types'
+
+// 浆液老批次按拌制日期补登（含检验冻结记录）：领域层生成，页面、检验、导出口径一致。
+const MORTAR_SEED = buildLegacyMortarData()
 
 // 示例数据：首次打开时播种，之后浏览器里的改动优先，重置才会回到这份。
 export const SEED_ROWS: Record<string, EntryRow[]> = {
@@ -398,50 +402,8 @@ export const SEED_ROWS: Record<string, EntryRow[]> = {
       "生产状态": "管片生产样例3"
     }
   ],
-  "mortar": [
-    {
-      "id": 1,
-      "status": "待拌制",
-      "pending": true,
-      "abnormal": false,
-      "批次编号": "MORT-0001",
-      "浆液类型": "浆液拌制样例1",
-      "水泥用量": "浆液拌制样例1",
-      "膨润土用量": "浆液拌制样例1",
-      "水灰比": "浆液拌制样例1",
-      "稠度": "浆液拌制样例1",
-      "拌制日期": "2026-09-01",
-      "批次状态": "浆液拌制样例1"
-    },
-    {
-      "id": 2,
-      "status": "拌制中",
-      "pending": true,
-      "abnormal": true,
-      "批次编号": "MORT-0002",
-      "浆液类型": "浆液拌制样例2",
-      "水泥用量": "浆液拌制样例2",
-      "膨润土用量": "浆液拌制样例2",
-      "水灰比": "浆液拌制样例2",
-      "稠度": "浆液拌制样例2",
-      "拌制日期": "2026-09-02",
-      "批次状态": "浆液拌制样例2"
-    },
-    {
-      "id": 3,
-      "status": "检验合格",
-      "pending": false,
-      "abnormal": false,
-      "批次编号": "MORT-0003",
-      "浆液类型": "浆液拌制样例3",
-      "水泥用量": "浆液拌制样例3",
-      "膨润土用量": "浆液拌制样例3",
-      "水灰比": "浆液拌制样例3",
-      "稠度": "浆液拌制样例3",
-      "拌制日期": "2026-09-03",
-      "批次状态": "浆液拌制样例3"
-    }
-  ],
+  "mortar": MORTAR_SEED.batches,
+  "mortarInspection": MORTAR_SEED.inspections,
   "ventilation": [
     {
       "id": 1,

@@ -11,6 +11,41 @@
       </div>
     </header>
 
+    <!-- 待用浆液清单：直接引用浆液领域的同一口径，拌制页看到几个这里就是几个 -->
+    <section class="sub-panel">
+      <header class="sub-head">
+        <h3>待用浆液清单（可投用批次）</h3>
+        <span class="muted-text">与浆液拌制页同源，由检验复测合格后自动进入；判据变更不影响已冻结结论</span>
+      </header>
+      <div class="stat-row">
+        <article class="stat-card stat-highlight">
+          <span class="stat-label">可投用批次</span>
+          <strong class="stat-value">{{ usableBatches.length }}</strong>
+        </article>
+      </div>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th v-for="column in readyColumns" :key="column">{{ column }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="detail in readyDetails" :key="String(detail['批次编号'])">
+            <td v-for="column in readyColumns" :key="column">{{ detail[column] ?? '—' }}</td>
+          </tr>
+          <tr v-if="!readyDetails.length">
+            <td :colspan="readyColumns.length" class="empty-state">暂无可投用浆液批次，合格批次经检验复测后自动出现</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <header class="page-head" style="margin-top: 20px">
+      <div>
+        <h3>注浆记录台账</h3>
+      </div>
+    </header>
+
     <div class="stat-row">
       <article v-for="item in stats" :key="item.label" class="stat-card">
         <span class="stat-label">{{ item.label }}</span>
@@ -79,21 +114,31 @@ import {
   moduleMeta,
   runAction as applyAction,
 } from '@/api/local-service'
+import {
+  listUsableMortarBatches,
+  mortarDetailRow,
+} from '@/domain/mortar'
 import type { EntryRow } from '@/data/types'
 
 const meta = moduleMeta('grouting')
-const columns = ["注浆编号", "对应环号", "浆液配比", "注浆量", "注浆压力", "初凝时间", "注浆班组", "注浆状态"]
-const actions = ["开始注浆", "确认完成", "安排补浆"]
-const statuses = ["待注浆", "注浆中", "已完成", "已补浆"]
-const stats = [{"label": "注浆总量", "value": 0}, {"label": "待补浆记录", "value": 0}, {"label": "平均注浆压力", "value": 0}]
+const columns = ['注浆编号', '对应环号', '浆液配比', '注浆量', '注浆压力', '初凝时间', '注浆班组', '注浆状态']
+const actions = ['开始注浆', '确认完成', '安排补浆']
+const statuses = ['待注浆', '注浆中', '已完成', '已补浆']
+const stats = [{ label: '注浆总量', value: 0 }, { label: '待补浆记录', value: 0 }, { label: '平均注浆压力', value: 0 }]
+// 待用清单展示列同样取统一明细拼装，两边不会各算一遍。
+const readyColumns = ['批次编号', '浆液类型', '拌制日期', '复测水灰比', '复测稠度', '判定结论', '判定判据']
 
 const rows = ref<EntryRow[]>([])
 const total = ref(0)
 const errorMessage = ref('')
 const filters = ref<Record<string, string>>({})
 const filterFields = columns.slice(0, 3)
+
+const usableBatches = ref<EntryRow[]>([])
+const readyDetails = computed(() => usableBatches.value.map((row) => mortarDetailRow(row)))
+
 const statusSummary = computed(() =>
-  statuses.map((status: string) => ({
+  statuses.map((status) => ({
     status,
     count: rows.value.filter((row) => String(row.status) === status).length,
   })),
@@ -128,6 +173,7 @@ function reload() {
     const payload = listEntries(meta.key, filters.value)
     rows.value = payload.items
     total.value = payload.total
+    usableBatches.value = listUsableMortarBatches()
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : '同步注浆列表读取失败'
   }

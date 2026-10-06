@@ -28,7 +28,17 @@ export function listEntries(key: string, filters: Record<string, string> = {}): 
   return { items: matched, total: matched.length, page: 1, size: matched.length }
 }
 
+// 浆液批次有自己的领域服务（统一判据、负责人废弃权限、检验冻结），
+// 不允许走通用状态机旁路，避免越权废弃或跳过判定。
+const DOMAIN_OWNED_KEYS = new Set(['mortar'])
+
 export function runAction(key: string, id: number, action: string): ActionResult {
+  if (DOMAIN_OWNED_KEYS.has(key)) {
+    return {
+      ok: false,
+      message: '浆液批次动作请走浆液拌制页与检验入口的统一流程，通用状态机不受理',
+    }
+  }
   const meta = moduleMeta(key)
   const target = meta.actionTargets[action]
   if (!target) {
@@ -73,6 +83,11 @@ export function exportEntries(key: string): { filename: string; content: string 
 
 export function downloadEntries(key: string): void {
   const { filename, content } = exportEntries(key)
+  downloadCsv(filename, content)
+}
+
+/** 通用 CSV 下载：模块清单与浆液台账共用。 */
+export function downloadCsv(filename: string, content: string): void {
   const blob = new Blob([content], { type: 'text/csv;charset=utf-8' })
   const url = URL.createObjectURL(blob)
   const anchor = document.createElement('a')
