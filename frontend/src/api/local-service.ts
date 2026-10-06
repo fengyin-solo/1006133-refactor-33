@@ -29,6 +29,11 @@ export function listEntries(key: string, filters: Record<string, string> = {}): 
 }
 
 export function runAction(key: string, id: number, action: string): ActionResult {
+  // 浆液批次的流转（开始拌制/提交检验/废弃）只允许走领域服务，
+  // 判据与权限在那里集中处理；通用入口不得直接改它的状态。
+  if (key === 'mortar') {
+    return { ok: false, message: '浆液批次请在拌制页/检验入口操作，状态流转统一由浆液领域服务处理' }
+  }
   const meta = moduleMeta(key)
   const target = meta.actionTargets[action]
   if (!target) {

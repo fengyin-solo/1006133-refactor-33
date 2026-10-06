@@ -11,6 +11,7 @@ const Axis = () => import('@/views/axis/index.vue')
 const Cutter = () => import('@/views/cutter/index.vue')
 const Segmentprod = () => import('@/views/segmentprod/index.vue')
 const Mortar = () => import('@/views/mortar/index.vue')
+const MortarInspection = () => import('@/views/mortar-inspection/index.vue')
 const Ventilation = () => import('@/views/ventilation/index.vue')
 const Building = () => import('@/views/building/index.vue')
 const Utility = () => import('@/views/utility/index.vue')
@@ -34,6 +35,7 @@ const router = createRouter({
     { path: '/cutter', name: 'cutter', component: Cutter },
     { path: '/segmentprod', name: 'segmentprod', component: Segmentprod },
     { path: '/mortar', name: 'mortar', component: Mortar },
+    { path: '/mortar-inspection', name: 'mortar-inspection', component: MortarInspection },
     { path: '/ventilation', name: 'ventilation', component: Ventilation },
     { path: '/building', name: 'building', component: Building },
     { path: '/utility', name: 'utility', component: Utility },

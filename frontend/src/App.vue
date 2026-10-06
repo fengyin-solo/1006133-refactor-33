@@ -11,7 +11,15 @@
     <main class="app-main">
       <header class="app-head">
         <span class="head-desc">面向盾构机台账、掘进环次、管片拼装、同步注浆、渣土外运、地表沉降监测与轴线纠偏的一体化盾构隧道施工管理平台。</span>
-        <span class="head-user">当前值班：{{ store.operator }} · {{ store.shiftLabel }}</span>
+        <span class="head-user">
+          当前值班：{{ store.operator }} · {{ store.shiftLabel }}
+          <label class="role-switch">
+            切换角色：
+            <select :value="store.role" @change="onRoleChange">
+              <option v-for="role in roles" :key="role" :value="role">{{ role }}</option>
+            </select>
+          </label>
+        </span>
       </header>
       <RouterView />
     </main>
@@ -19,9 +27,19 @@
 </template>
 
 <script setup lang="ts">
-import { useSessionStore } from '@/stores/session'
+import { SESSION_ROLES, useSessionStore } from '@/stores/session'
 
 const store = useSessionStore()
+const roles = SESSION_ROLES
 
-const navItems = [{ label: "运营概览", path: "/" }, { label: "盾构机台账", path: "/shield" }, { label: "掘进环次", path: "/ring" }, { label: "管片拼装", path: "/segment" }, { label: "同步注浆", path: "/grouting" }, { label: "渣土外运", path: "/muck" }, { label: "地表沉降", path: "/settlement" }, { label: "轴线偏差", path: "/axis" }, { label: "刀具磨损", path: "/cutter" }, { label: "管片生产", path: "/segmentprod" }, { label: "浆液拌制", path: "/mortar" }, { label: "洞内通风", path: "/ventilation" }, { label: "建筑监测", path: "/building" }, { label: "管线探查", path: "/utility" }, { label: "进度节点", path: "/progress" }, { label: "试验检测", path: "/testing" }, { label: "应急演练", path: "/drill" }, { label: "班组进场", path: "/crew" }, { label: "安全巡检", path: "/safety" }]
+function onRoleChange(event: Event) {
+  store.setRole((event.target as HTMLSelectElement).value as (typeof SESSION_ROLES)[number])
+}
+
+const navItems = [{ label: "运营概览", path: "/" }, { label: "盾构机台账", path: "/shield" }, { label: "掘进环次", path: "/ring" }, { label: "管片拼装", path: "/segment" }, { label: "同步注浆", path: "/grouting" }, { label: "渣土外运", path: "/muck" }, { label: "地表沉降", path: "/settlement" }, { label: "轴线偏差", path: "/axis" }, { label: "刀具磨损", path: "/cutter" }, { label: "管片生产", path: "/segmentprod" }, { label: "浆液拌制", path: "/mortar" }, { label: "浆液检验", path: "/mortar-inspection" }, { label: "洞内通风", path: "/ventilation" }, { label: "建筑监测", path: "/building" }, { label: "管线探查", path: "/utility" }, { label: "进度节点", path: "/progress" }, { label: "试验检测", path: "/testing" }, { label: "应急演练", path: "/drill" }, { label: "班组进场", path: "/crew" }, { label: "安全巡检", path: "/safety" }]
 </script>
+
+<style scoped>
+.role-switch { margin-left: 12px; font-size: 12px; }
+.role-switch select { font-size: 12px; padding: 2px 4px; }
+</style>

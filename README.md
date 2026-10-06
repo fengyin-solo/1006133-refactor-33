@@ -69,3 +69,24 @@ npm run build
   `frontend/src/data/seed.ts`。
 - 状态流转只允许在 `local-service.ts` 里改，页面组件不做业务判断。
 - 想回到初始数据：清掉浏览器里 `shield-tunnel-construction:entries` 这一项，或调用 `resetModule(模块)`。
+
+## 浆液批次：判据与状态流转的单一实现
+
+浆液批次（拌制 → 检验 → 投用/废弃）不走通用动作流，统一收敛在 `frontend/src/domain/mortar/`，
+拌制页、浆液检验入口、导出台账、同步注浆待用清单全部调它，不再各算一遍：
+
+- `policy.ts`：推进判据集中成一份**版本化配置**（`MORTAR_POLICIES` + `CURRENT_MORTAR_POLICY`），
+  唯一判定入口 `evaluateBatch`。两栏都有数值时稠度与水灰比都须在区间内；只有一栏可读时
+  **稠度为主判栏**（只有水灰比不能定合格）；都不可读判“数据不全、不允许投用”。
+- `mortar-service.ts`：登记（按批次编号幂等，反复提交只入一条）、开始拌制、提交检验、
+  废弃（**仅拌制站负责人**，越权在领域层当场拒绝）、判据变更后的 `reapplyPolicy`。
+  定论批次（检验合格/不合格/已废弃）保存判据版本与结论快照，判据再变也按当时结论保留，
+  只追加“新判据复判”信息；未定论批次按新判据重新预检。
+- `mortar-view.ts` / `mortar-export.ts`：唯一的明细拼装与台账导出，可投用口径
+  （`listReadyBatches` / `isReadyForUse`）被拌制页、检验入口、同步注浆待用清单共用，
+  两边看到的“可投用批次数”必然是同一个数。
+- 所有写库走 `local-store.ts` 的 `commitRows`：先组装并预序列化，任一失败内存与
+  localStorage 都保持原状——入库失败一律不落。
+- 历史浆液数据按拌制日期在 `seed.ts` 中补登；旧版本缓存由 `local-store.ts` 自动迁移
+  （数据结构版本号 `DATA_VERSION`），其余模块的本机数据保留。
+

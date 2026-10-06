@@ -16,7 +16,40 @@
         <span class="stat-label">{{ item.label }}</span>
         <strong class="stat-value">{{ item.value }}</strong>
       </article>
+      <article class="stat-card ready-card">
+        <span class="stat-label">待用浆液批次（拌制站推送）</span>
+        <strong class="stat-value">{{ readyBatches.length }}</strong>
+      </article>
     </div>
+
+    <section class="ready-panel">
+      <header class="ready-head">
+        <h3>浆液待用清单</h3>
+        <span class="cell-note">可投用批次 {{ readyBatches.length }} 个，与浆液拌制页/检验入口同一口径；早先定论按当时判据保留。</span>
+      </header>
+      <table class="data-table">
+        <thead>
+          <tr><th>批次编号</th><th>浆液类型</th><th>水灰比</th><th>稠度</th><th>拌制日期</th><th>检验结论</th><th>判据版本</th></tr>
+        </thead>
+        <tbody>
+          <tr v-for="item in readyViews" :key="item.id">
+            <td>{{ item.batchNo }}</td>
+            <td>{{ item.slurryType }}</td>
+            <td>{{ item.waterCementRatio }}</td>
+            <td>{{ item.consistency }}</td>
+            <td>{{ item.mixedDate }}</td>
+            <td><span class="tag tag-green">{{ item.verdictLabel }}</span></td>
+            <td>
+              {{ item.evaluation.policyVersion }}
+              <span v-if="item.evaluation.policyVersion !== currentPolicyVersion" class="cell-note warn">历史判据定论，结论保留</span>
+            </td>
+          </tr>
+          <tr v-if="!readyViews.length">
+            <td colspan="7" class="empty-state">暂无检验合格、可投用的浆液批次</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
 
     <p class="status-legend">
       <span v-for="item in statusSummary" :key="item.status" class="legend-item">
@@ -80,6 +113,9 @@ import {
   runAction as applyAction,
 } from '@/api/local-service'
 import type { EntryRow } from '@/data/types'
+import { listReadyBatches } from '@/domain/mortar/mortar-service'
+import { toBatchView, type BatchView } from '@/domain/mortar/mortar-view'
+import { CURRENT_MORTAR_POLICY } from '@/domain/mortar/policy'
 
 const meta = moduleMeta('grouting')
 const columns = ["注浆编号", "对应环号", "浆液配比", "注浆量", "注浆压力", "初凝时间", "注浆班组", "注浆状态"]
@@ -92,6 +128,16 @@ const total = ref(0)
 const errorMessage = ref('')
 const filters = ref<Record<string, string>>({})
 const filterFields = columns.slice(0, 3)
+
+// 待用清单与拌制/检验页共用同一份选择器与视图模型，数字必然一致。
+const readyViews = ref<BatchView[]>([])
+const readyBatches = computed(() => readyViews.value)
+const currentPolicyVersion = CURRENT_MORTAR_POLICY.version
+
+function reloadReady() {
+  readyViews.value = listReadyBatches().map(toBatchView)
+}
+
 const statusSummary = computed(() =>
   statuses.map((status: string) => ({
     status,
@@ -128,6 +174,7 @@ function reload() {
     const payload = listEntries(meta.key, filters.value)
     rows.value = payload.items
     total.value = payload.total
+    reloadReady()
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : '同步注浆列表读取失败'
   }
@@ -135,3 +182,13 @@ function reload() {
 
 onMounted(reload)
 </script>
+
+<style scoped>
+.ready-card { border-color: #1a7f37; }
+.ready-panel { background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; margin-bottom: 14px; }
+.ready-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+.ready-head h3 { margin: 0; font-size: 15px; }
+.tag { display: inline-block; border-radius: 999px; padding: 1px 8px; font-size: 12px; white-space: nowrap; background: #e7f6ec; color: #1a7f37; }
+.cell-note { color: var(--muted); font-size: 12px; }
+.cell-note.warn { color: #b54708; }
+</style>
